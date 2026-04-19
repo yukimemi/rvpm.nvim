@@ -20,24 +20,44 @@ makes common operations available without leaving the editor:
 
 ## Installation
 
-With `rvpm` itself:
+Add it to `rvpm`'s `config.toml` like any other plugin.
 
-```sh
-rvpm add yukimemi/rvpm.nvim
+**Minimal (eager, default)** — `:Rvpm` is available on startup and the
+auto-generate autocmd is registered:
+
+```toml
+[[plugins]]
+url = "yukimemi/rvpm.nvim"
 ```
 
-Or with any other plugin manager, e.g. `lazy.nvim`:
+**Lazy on `:Rvpm` invocation** — skip startup cost, at the expense of
+the auto-generate autocmd (set `auto_generate = false` in the hook
+below to suppress the warning):
+
+```toml
+[[plugins]]
+url    = "yukimemi/rvpm.nvim"
+on_cmd = ["Rvpm", "RvpmAddCursor"]
+```
+
+**With an explicit `setup()`** — drop a per-plugin hook at
+`~/.config/rvpm/<appname>/plugins/github.com/yukimemi/rvpm.nvim/after.lua`:
 
 ```lua
-{
-  "yukimemi/rvpm.nvim",
-  opts = {},
-}
+require("rvpm").setup({
+  notify = true,
+  auto_generate = true,
+  terminal = { border = "rounded" },
+})
 ```
 
-`setup()` is **optional** — `:Rvpm` works immediately after the plugin
-loads. Call `require("rvpm").setup({...})` only to change defaults or
-opt out of auto-generate.
+`setup()` is **optional** — `:Rvpm` and `:RvpmAddCursor` register
+eagerly via `plugin/rvpm.lua` regardless. Call `setup()` only to tweak
+defaults or opt out of auto-generate.
+
+> `auto_generate = true` requires the plugin to be loaded before you
+> save `config.toml`, so it's incompatible with `on_cmd` lazy-loading.
+> Use the minimal eager form if you want the autocmd.
 
 ## Commands
 
