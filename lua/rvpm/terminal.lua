@@ -32,6 +32,23 @@ local function open_float(title)
   })
 end
 
+---True when `buf` is an empty, unnamed, unmodified buffer — safe to
+---convert to a terminal even without a bufnr change. Used to distinguish
+---`:enew!` on a reusable scratch (expected) from an accidental no-op
+---opener that leaves a real file buffer current (dangerous).
+---@param buf integer
+---@return boolean
+function M._buffer_is_empty_scratch(buf)
+  if vim.bo[buf].modified then
+    return false
+  end
+  if vim.api.nvim_buf_get_name(buf) ~= "" then
+    return false
+  end
+  local lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+  return #lines == 0 or (#lines == 1 and lines[1] == "")
+end
+
 ---Resolve the opener into a current-window side effect.
 ---After this returns, `nvim_get_current_{win,buf}` should point at the
 ---window/buffer jobstart will take over with `term = true`.
@@ -69,14 +86,15 @@ function M.open(args)
   local buf = vim.api.nvim_get_current_buf()
   local win = vim.api.nvim_get_current_win()
 
-  -- Safety: the opener must have created or switched to a fresh buffer.
-  -- Otherwise jobstart(term=true) would convert the user's working
-  -- buffer into a terminal. `:enew` fails silently when &hidden is off
-  -- and the current buffer is modified — catch that here.
-  if buf == buf_before then
+  -- Safety: we're about to turn `buf` into a terminal. The dangerous case
+  -- is when the opener left us on the same buffer *and* that buffer holds
+  -- real work (named / modified / non-empty) — jobstart would clobber it.
+  -- `:enew!` on an already-empty unnamed scratch buffer can keep the same
+  -- bufnr (nvim reuses it); that's safe, so let it through.
+  if buf == buf_before and not M._buffer_is_empty_scratch(buf) then
     if cfg.options.notify then
       vim.notify(
-        "rvpm.nvim: opener did not switch buffers — aborting (modified buffer? try `enew!`)",
+        "rvpm.nvim: opener left us in a non-empty / named / modified buffer — aborting",
         vim.log.levels.ERROR,
         { title = "rvpm" }
       )
@@ -85,6 +103,7 @@ function M.open(args)
   end
 
   local window_was_reused = (win == win_before)
+  local have_prior_buf = (buf ~= buf_before)
 
   pcall(vim.api.nvim_buf_set_name, buf, "rvpm://" .. table.concat(args, " "))
 
@@ -98,7 +117,13 @@ function M.open(args)
         if window_was_reused then
           -- The opener took over the user's current window (e.g. `enew`).
           -- Don't close it — restore the buffer that was there before.
-          if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(buf_before) then
+          -- Skip restore when the opener reused the same bufnr (empty
+          -- scratch case): there's no distinct prior buffer, and after
+          -- the wipe below nvim will pick a fallback for the window.
+          if have_prior_buf
+            and vim.api.nvim_win_is_valid(win)
+            and vim.api.nvim_buf_is_valid(buf_before)
+          then
             pcall(vim.api.nvim_win_set_buf, win, buf_before)
           end
         else

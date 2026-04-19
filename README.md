@@ -133,12 +133,17 @@ hosted. Accepts:
 | any other string | Passed to `vim.cmd()` verbatim — e.g. `"botright 20split"`, `"enew"`, `"enew!"` |
 | `function()` | Called directly; must leave a usable window current when it returns |
 
-Reusing the current window (e.g. `opener = "enew"`) is supported:
-`rvpm.nvim` detects that no new window was created and, on exit,
-restores the buffer that was there before instead of closing the
-window. If `:enew` fails because the current buffer is modified and
-`&hidden` is off, the invocation is aborted with an error notification
-(use `"enew!"` to force through).
+Reusing the current window (e.g. `opener = "enew"` / `"enew!"`) is
+supported: `rvpm.nvim` detects that no new window was created and, on
+exit, restores the buffer that was there before (or lets nvim pick a
+fallback if the opener reused an already-empty scratch buffer).
+
+The opener is aborted with an error notification if it leaves you on a
+**non-empty, named, or modified** buffer — that would cause
+`jobstart(term = true)` to clobber real work. Use `"enew!"` to force
+through a modified buffer (discards changes, matching `:enew!` itself),
+or an opener that actually creates a new window if you want to preserve
+the current one untouched.
 
 Examples:
 
