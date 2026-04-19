@@ -130,8 +130,15 @@ hosted. Accepts:
 | `"split"` / `"hsplit"` | `:new` — horizontal split below |
 | `"vsplit"` | `:vnew` — vertical split to the left |
 | `"tabnew"` / `"tab"` | `:tabnew` — fresh tab |
-| any other string | Passed to `vim.cmd()` verbatim — e.g. `"botright 20split"`, `"belowright vnew"` |
+| any other string | Passed to `vim.cmd()` verbatim — e.g. `"botright 20split"`, `"enew"`, `"enew!"` |
 | `function()` | Called directly; must leave a usable window current when it returns |
+
+Reusing the current window (e.g. `opener = "enew"`) is supported:
+`rvpm.nvim` detects that no new window was created and, on exit,
+restores the buffer that was there before instead of closing the
+window. If `:enew` fails because the current buffer is modified and
+`&hidden` is off, the invocation is aborted with an error notification
+(use `"enew!"` to force through).
 
 Examples:
 

@@ -61,16 +61,32 @@ function M.open(args)
   local opener = cfg.options.terminal.opener or "float"
   local title = "rvpm " .. table.concat(args, " ")
 
+  local buf_before = vim.api.nvim_get_current_buf()
+  local win_before = vim.api.nvim_get_current_win()
+
   spawn_host(opener, title)
 
   local buf = vim.api.nvim_get_current_buf()
   local win = vim.api.nvim_get_current_win()
 
-  -- For non-float hosts the window has no title; stamp the buffer name
-  -- instead so it shows up as `rvpm://list` etc. in statuslines / tablines.
-  if opener ~= "float" then
-    pcall(vim.api.nvim_buf_set_name, buf, "rvpm://" .. table.concat(args, " "))
+  -- Safety: the opener must have created or switched to a fresh buffer.
+  -- Otherwise jobstart(term=true) would convert the user's working
+  -- buffer into a terminal. `:enew` fails silently when &hidden is off
+  -- and the current buffer is modified — catch that here.
+  if buf == buf_before then
+    if cfg.options.notify then
+      vim.notify(
+        "rvpm.nvim: opener did not switch buffers — aborting (modified buffer? try `enew!`)",
+        vim.log.levels.ERROR,
+        { title = "rvpm" }
+      )
+    end
+    return
   end
+
+  local window_was_reused = (win == win_before)
+
+  pcall(vim.api.nvim_buf_set_name, buf, "rvpm://" .. table.concat(args, " "))
 
   local cmd = { cfg.options.cmd }
   vim.list_extend(cmd, args)
@@ -79,8 +95,16 @@ function M.open(args)
     term = true,
     on_exit = function(_, code)
       vim.schedule(function()
-        if vim.api.nvim_win_is_valid(win) then
-          vim.api.nvim_win_close(win, true)
+        if window_was_reused then
+          -- The opener took over the user's current window (e.g. `enew`).
+          -- Don't close it — restore the buffer that was there before.
+          if vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(buf_before) then
+            pcall(vim.api.nvim_win_set_buf, win, buf_before)
+          end
+        else
+          if vim.api.nvim_win_is_valid(win) then
+            vim.api.nvim_win_close(win, true)
+          end
         end
         if vim.api.nvim_buf_is_valid(buf) then
           vim.api.nvim_buf_delete(buf, { force = true })
