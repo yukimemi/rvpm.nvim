@@ -4,6 +4,9 @@ local enabled_cache = nil
 -- `false` = resolved to "no source root" (chezmoi off / unmanaged / errored);
 -- `string` = the resolved path; `nil` = not yet resolved.
 local source_root_cache = nil
+-- Guard so concurrent invalidate+prewarm cycles don't spawn overlapping
+-- `chezmoi source-path` processes. Cleared from inside the async callback.
+local source_root_in_flight = false
 
 function M.invalidate_cache()
   enabled_cache = nil
@@ -46,37 +49,53 @@ local function normalize_slashes(p)
   return (p:gsub("\\", "/"))
 end
 
----Resolve the chezmoi source root corresponding to rvpm's `config_root`.
----Blocking on first call (capped at 2s). Cached; invalidate via `invalidate_cache()`.
----Returns `nil` when chezmoi is disabled, not installed, or `config_root` isn't
----managed by chezmoi. A `nil` result is the signal for the autocmd to treat the
----save as "target-only" and skip chezmoi wiring entirely.
----@return string|nil
-function M.source_root()
-  if source_root_cache == false then
-    return nil
-  end
-  if source_root_cache then
-    return source_root_cache
+---Kick off an async `chezmoi source-path <config_root>` to populate the
+---source-root cache. Returns immediately — no UI-thread work beyond the
+---spawn of a subprocess (and only when chezmoi is actually enabled and
+---installed). Subsequent calls are no-ops while a resolution is in flight
+---or once a result is cached; pair with `invalidate_cache()` to refresh
+---after a config.toml flip.
+function M.prewarm_source_root()
+  if source_root_cache ~= nil or source_root_in_flight then
+    return
   end
   if not M.enabled_in_config() or vim.fn.executable("chezmoi") ~= 1 then
     source_root_cache = false
-    return nil
+    return
   end
+  source_root_in_flight = true
   local cfg = require("rvpm.config")
-  local ok, result = pcall(function()
-    return vim.system({ "chezmoi", "source-path", cfg.config_root() }, { text = true }):wait(2000)
-  end)
-  if not ok or not result or result.code ~= 0 then
-    source_root_cache = false
+  vim.system(
+    { "chezmoi", "source-path", cfg.config_root() },
+    { text = true },
+    function(result)
+      vim.schedule(function()
+        source_root_in_flight = false
+        if not result or result.code ~= 0 then
+          source_root_cache = false
+          return
+        end
+        local s = vim.trim(result.stdout or "")
+        if s == "" then
+          source_root_cache = false
+          return
+        end
+        source_root_cache = normalize_slashes(s)
+      end)
+    end
+  )
+end
+
+---Read the cached chezmoi source root. Non-blocking; returns `nil` when
+---chezmoi is disabled, not installed, `config_root` isn't managed, or the
+---async prewarm hasn't completed yet. The autocmd treats `nil` as the
+---"source-side detection is off" signal, so a cold cache just skips the
+---source path for the very first save and works normally on the next.
+---@return string|nil
+function M.source_root()
+  if source_root_cache == false or source_root_cache == nil then
     return nil
   end
-  local s = vim.trim(result.stdout or "")
-  if s == "" then
-    source_root_cache = false
-    return nil
-  end
-  source_root_cache = normalize_slashes(s)
   return source_root_cache
 end
 

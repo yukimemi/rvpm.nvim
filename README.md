@@ -196,8 +196,10 @@ edit`), the save lands on whichever copy you opened. `rvpm.nvim`
 reconciles both directions on `BufWritePost` so chezmoi's source /
 target never drift.
 
-The autocmd resolves `chezmoi source-path <config_root>` once at setup
-(cached) and classifies each save:
+The autocmd resolves `chezmoi source-path <config_root>` **asynchronously
+at setup time** (background subprocess, no UI-thread work; entirely
+skipped when `[options].chezmoi = false`) and caches the result. It then
+classifies each save:
 
 | Saved path is under … | Action |
 |---|---|

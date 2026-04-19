@@ -70,15 +70,25 @@ end
 
 function M.register()
   local group = vim.api.nvim_create_augroup("rvpm_auto_generate", { clear = true })
+
+  -- Warm the chezmoi source-root cache asynchronously at setup time so the
+  -- first save doesn't pay a `chezmoi source-path` round-trip on the UI
+  -- thread. Cheap when chezmoi is off (one file read, no subprocess spawn).
+  chezmoi.prewarm_source_root()
+
   vim.api.nvim_create_autocmd("BufWritePost", {
     group = group,
     callback = function(ev)
       local path = normalize(vim.fn.fnamemodify(ev.file, ":p"))
 
-      -- config.toml save may flip chezmoi flag / config_root; drop caches before
-      -- classifying so the next query picks up the change.
+      -- config.toml save may flip the chezmoi flag. Drop caches and re-prewarm
+      -- so subsequent saves see the new state. The *current* save still uses
+      -- the pre-flip caches for classification, which is fine — either the
+      -- path is under config_root (target case, doesn't need source_root) or
+      -- it's outside (unrelated).
       if path:match("/config%.toml$") then
         chezmoi.invalidate_cache()
+        chezmoi.prewarm_source_root()
       end
 
       local kind = classify(path)
