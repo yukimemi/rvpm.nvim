@@ -20,10 +20,14 @@ makes common operations available without leaving the editor:
 
 ## Installation
 
-Add it to `rvpm`'s `config.toml` like any other plugin.
+Quickest — let `rvpm` itself add the entry and sync:
 
-**Minimal (eager, default)** — `:Rvpm` is available on startup and the
-auto-generate autocmd is registered:
+```sh
+rvpm add yukimemi/rvpm.nvim
+```
+
+Or edit `config.toml` directly. **Minimal (eager, default)** — `:Rvpm`
+is available on startup and the auto-generate autocmd is registered:
 
 ```toml
 [[plugins]]
