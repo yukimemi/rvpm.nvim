@@ -2,11 +2,16 @@ local M = {}
 
 local cfg = require("rvpm.config")
 
----Open an rvpm subcommand in a centered floating terminal.
----On exit, the floating window is closed and `checktime` re-reads any buffer
----the TUI may have edited (config.toml, hook files).
----@param args string[]
-function M.open(args)
+-- Canonical ex-commands for the built-in opener shortcuts.
+local SHORTCUTS = {
+  split   = "new",
+  hsplit  = "new",
+  vsplit  = "vnew",
+  tabnew  = "tabnew",
+  tab     = "tabnew",
+}
+
+local function open_float(title)
   local opts = cfg.options.terminal
   local cols = math.floor(vim.o.columns * opts.width)
   local rows = math.floor(vim.o.lines * opts.height)
@@ -14,7 +19,7 @@ function M.open(args)
   local row = math.floor((vim.o.lines - rows) / 2)
 
   local buf = vim.api.nvim_create_buf(false, true)
-  local win = vim.api.nvim_open_win(buf, true, {
+  vim.api.nvim_open_win(buf, true, {
     relative = "editor",
     width = cols,
     height = rows,
@@ -22,9 +27,50 @@ function M.open(args)
     row = row,
     style = "minimal",
     border = opts.border,
-    title = " rvpm " .. table.concat(args, " ") .. " ",
+    title = " " .. title .. " ",
     title_pos = "center",
   })
+end
+
+---Resolve the opener into a current-window side effect.
+---After this returns, `nvim_get_current_{win,buf}` should point at the
+---window/buffer jobstart will take over with `term = true`.
+---@param opener string|fun()
+---@param title string
+local function spawn_host(opener, title)
+  if type(opener) == "function" then
+    opener()
+    return
+  end
+  if opener == "float" then
+    open_float(title)
+    return
+  end
+  local shortcut = SHORTCUTS[opener]
+  if shortcut then
+    vim.cmd(shortcut)
+    return
+  end
+  -- Anything else is treated as a user-supplied ex-command.
+  vim.cmd(opener)
+end
+
+---Open an rvpm subcommand in the configured host window.
+---@param args string[]
+function M.open(args)
+  local opener = cfg.options.terminal.opener or "float"
+  local title = "rvpm " .. table.concat(args, " ")
+
+  spawn_host(opener, title)
+
+  local buf = vim.api.nvim_get_current_buf()
+  local win = vim.api.nvim_get_current_win()
+
+  -- For non-float hosts the window has no title; stamp the buffer name
+  -- instead so it shows up as `rvpm://list` etc. in statuslines / tablines.
+  if opener ~= "float" then
+    pcall(vim.api.nvim_buf_set_name, buf, "rvpm://" .. table.concat(args, " "))
+  end
 
   local cmd = { cfg.options.cmd }
   vim.list_extend(cmd, args)
@@ -42,7 +88,7 @@ function M.open(args)
         vim.cmd("checktime")
         if code ~= 0 and cfg.options.notify then
           vim.notify(
-            "rvpm " .. table.concat(args, " ") .. " exited " .. code,
+            title .. " exited " .. code,
             vim.log.levels.WARN,
             { title = "rvpm" }
           )

@@ -109,13 +109,50 @@ require("rvpm").setup({
   auto_generate = true,  -- run `rvpm generate` on BufWritePost of config.toml / hooks
   notify = true,         -- vim.notify on CLI completion
   terminal = {
-    width = 0.9,
+    opener = "float",    -- "float" | "split" | "vsplit" | "tabnew" | any ex-command | function
+    -- float-only sizing:
+    width  = 0.9,
     height = 0.9,
     border = "rounded",
   },
   config_root = nil,     -- override; default = ~/.config/rvpm/<appname>
 })
 ```
+
+### `terminal.opener`
+
+Controls where the interactive TUIs (`list` / `browse` / `edit` / …) are
+hosted. Accepts:
+
+| Value | Effect |
+|---|---|
+| `"float"` *(default)* | Centered floating window using `terminal.{width,height,border}` |
+| `"split"` / `"hsplit"` | `:new` — horizontal split below |
+| `"vsplit"` | `:vnew` — vertical split to the left |
+| `"tabnew"` / `"tab"` | `:tabnew` — fresh tab |
+| any other string | Passed to `vim.cmd()` verbatim — e.g. `"botright 20split"`, `"belowright vnew"` |
+| `function()` | Called directly; must leave a usable window current when it returns |
+
+Examples:
+
+```lua
+-- Open TUIs in a 20-line split at the bottom
+require("rvpm").setup({ terminal = { opener = "botright 20split" } })
+
+-- Or hand full control to a function
+require("rvpm").setup({
+  terminal = {
+    opener = function()
+      vim.cmd("tabnew")
+      vim.wo.number = false
+    end,
+  },
+})
+```
+
+Non-float hosts get the buffer named `rvpm://<args>` so the session shows
+up cleanly in statuslines and tablines. The buffer is wiped on process
+exit along with the window.
 
 `<appname>` follows `rvpm`'s own rule:
 `$RVPM_APPNAME` → `$NVIM_APPNAME` → `"nvim"`.

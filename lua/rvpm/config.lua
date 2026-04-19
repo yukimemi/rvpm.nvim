@@ -8,15 +8,22 @@ local M = {}
 ---@field config_root string|nil     Override for the config root. Nil = derive from $NVIM_APPNAME.
 
 ---@class rvpm.TerminalOpts
----@field width number               Fraction of editor width (0..1).
----@field height number              Fraction of editor height (0..1).
----@field border string              Border style passed to nvim_open_win.
+---@field opener string|fun()        How to create the host window for the TUI.
+---                                  Built-in shortcuts: "float" (default), "split",
+---                                  "vsplit", "tabnew". Any other string is passed to
+---                                  `vim.cmd()` as-is (e.g. "botright 20split"). A
+---                                  function is invoked and must leave a usable window
+---                                  current.
+---@field width number               Float-only: fraction of editor width (0..1).
+---@field height number              Float-only: fraction of editor height (0..1).
+---@field border string              Float-only: border style passed to nvim_open_win.
 
 M.defaults = {
   cmd = "rvpm",
   auto_generate = true,
   notify = true,
   terminal = {
+    opener = "float",
     width = 0.9,
     height = 0.9,
     border = "rounded",
