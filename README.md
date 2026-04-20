@@ -240,6 +240,7 @@ busted harness. From a fresh clone:
 ```sh
 git clone --depth=1 https://github.com/nvim-lua/plenary.nvim tests/plenary
 
+# Run the whole suite (fine on Linux / macOS)
 nvim --headless --noplugin -u tests/minimal_init.lua \
   -c "PlenaryBustedDirectory tests/rvpm {minimal_init = 'tests/minimal_init.lua', sequential = true}"
 ```
@@ -251,7 +252,16 @@ PLENARY=~/.local/share/nvim/lazy/plenary.nvim \
   nvim --headless --noplugin -u tests/minimal_init.lua -c '...'
 ```
 
-CI runs the same invocation across Ubuntu / macOS / Windows on both
+**Windows** (and CI): `PlenaryBustedDirectory` shells out to PowerShell
+for file enumeration and times out on slow runners. Iterate per-file:
+
+```sh
+for spec in tests/rvpm/*_spec.lua; do
+  nvim --headless --noplugin -u tests/minimal_init.lua -c "PlenaryBustedFile $spec"
+done
+```
+
+CI runs the per-file loop across Ubuntu / macOS / Windows on both
 `stable` and `nightly` Neovim.
 
 ## License

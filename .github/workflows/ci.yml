@@ -31,5 +31,16 @@ jobs:
       - name: Run tests
         shell: bash
         run: |
-          nvim --headless --noplugin -u tests/minimal_init.lua \
-            -c "PlenaryBustedDirectory tests/rvpm {minimal_init = 'tests/minimal_init.lua', sequential = true}"
+          # PlenaryBustedDirectory spawns pwsh on Windows runners to enumerate
+          # *_spec.lua files, and pwsh's 5s startup blows plenary's timeout.
+          # Enumerate in shell instead and run each spec in its own nvim
+          # invocation — works identically on Linux / macOS / Windows.
+          set -e
+          status=0
+          for spec in tests/rvpm/*_spec.lua; do
+            echo "::group::$spec"
+            nvim --headless --noplugin -u tests/minimal_init.lua \
+              -c "PlenaryBustedFile $spec" || status=$?
+            echo "::endgroup::"
+          done
+          exit $status
