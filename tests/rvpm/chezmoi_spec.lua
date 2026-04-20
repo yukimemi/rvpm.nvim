@@ -112,4 +112,45 @@ describe("rvpm.chezmoi", function()
       assert.is_true(called, "callback must fire immediately when disabled")
     end)
   end)
+
+  describe("notify option", function()
+    -- Covers the regression where chezmoi.lua called vim.notify
+    -- unconditionally, ignoring `setup({ notify = false })`. All chezmoi
+    -- op failures must stay silent when the user turns notifications off.
+    local notify_count
+    local saved_notify
+
+    before_each(function()
+      notify_count = 0
+      saved_notify = vim.notify
+      vim.notify = function()
+        notify_count = notify_count + 1
+      end
+      write_config("[options]\nchezmoi = false\n")
+    end)
+
+    after_each(function()
+      vim.notify = saved_notify
+    end)
+
+    it("stays silent on sync_target_to_source when notify=false", function()
+      cfg.options.notify = false
+      local fired = false
+      chezmoi.sync_target_to_source("/nonexistent/path", function()
+        fired = true
+      end)
+      assert.is_true(fired)
+      assert.equals(0, notify_count)
+    end)
+
+    it("stays silent on apply_source_to_target when notify=false", function()
+      cfg.options.notify = false
+      local fired = false
+      chezmoi.apply_source_to_target("/nonexistent/source", function()
+        fired = true
+      end)
+      assert.is_true(fired)
+      assert.equals(0, notify_count)
+    end)
+  end)
 end)

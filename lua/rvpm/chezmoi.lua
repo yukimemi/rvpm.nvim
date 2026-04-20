@@ -1,5 +1,15 @@
 local M = {}
 
+-- Gate vim.notify calls on the user-facing `notify` option so `notify=false`
+-- truly silences every message — matching cli.lua / terminal.lua. Chezmoi ops
+-- only surface on failure (success is silent; autocmd fires on every :w and
+-- success-per-save would be spam), but even failures must be suppressible.
+local function notify_if_enabled(msg, level)
+  if require("rvpm.config").options.notify then
+    vim.notify(msg, level, { title = "rvpm" })
+  end
+end
+
 local enabled_cache = nil
 -- `false` = resolved to "no source root" (chezmoi off / unmanaged / errored);
 -- `string` = the resolved path; `nil` = not yet resolved.
@@ -140,15 +150,14 @@ function M.sync_target_to_source(target, callback)
     vim.system({ "chezmoi", "add", "--force", target_os }, { text = true }, function(r2)
       vim.schedule(function()
         if r2.code ~= 0 then
-          vim.notify(
+          notify_if_enabled(
             "rvpm.nvim: chezmoi sync failed for "
               .. target
               .. "\n  re-add: "
               .. (r1.stderr or "")
               .. "\n  add:    "
               .. (r2.stderr or ""),
-            vim.log.levels.WARN,
-            { title = "rvpm" }
+            vim.log.levels.WARN
           )
         end
         callback()
@@ -182,10 +191,9 @@ function M.apply_source_to_target(source, callback)
     vim.system({ "chezmoi", "apply", "--force", target }, { text = true }, function(r2)
       vim.schedule(function()
         if r2.code ~= 0 then
-          vim.notify(
+          notify_if_enabled(
             "chezmoi apply failed: " .. target .. "\n" .. (r2.stderr or ""),
-            vim.log.levels.WARN,
-            { title = "rvpm" }
+            vim.log.levels.WARN
           )
         end
         callback()
