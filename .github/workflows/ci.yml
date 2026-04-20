@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }} / nvim ${{ matrix.nvim }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        nvim: [stable, nightly]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.nvim }}
+
+      - name: Checkout plenary.nvim
+        uses: actions/checkout@v4
+        with:
+          repository: nvim-lua/plenary.nvim
+          path: tests/plenary
+
+      - name: Run tests
+        shell: bash
+        run: |
+          nvim --headless --noplugin -u tests/minimal_init.lua \
+            -c "PlenaryBustedDirectory tests/rvpm {minimal_init = 'tests/minimal_init.lua', sequential = true}"

@@ -230,6 +230,30 @@ Reports:
 - `config_root` and `config.toml` existence
 - `rvpm doctor` exit status and full output
 
+## Development
+
+### Running tests
+
+Tests use [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)'s
+busted harness. From a fresh clone:
+
+```sh
+git clone --depth=1 https://github.com/nvim-lua/plenary.nvim tests/plenary
+
+nvim --headless --noplugin -u tests/minimal_init.lua \
+  -c "PlenaryBustedDirectory tests/rvpm {minimal_init = 'tests/minimal_init.lua', sequential = true}"
+```
+
+Already have plenary elsewhere? Point `$PLENARY` at it instead of cloning:
+
+```sh
+PLENARY=~/.local/share/nvim/lazy/plenary.nvim \
+  nvim --headless --noplugin -u tests/minimal_init.lua -c '...'
+```
+
+CI runs the same invocation across Ubuntu / macOS / Windows on both
+`stable` and `nightly` Neovim.
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

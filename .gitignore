@@ -3,3 +3,6 @@
 *.swo
 *.luac
 tags
+
+# Pulled in by `make test` / CI for the busted harness.
+tests/plenary/
