@@ -4,20 +4,37 @@ local cfg = require("rvpm.config")
 local cli = require("rvpm.cli")
 local chezmoi = require("rvpm.chezmoi")
 
+local IS_WINDOWS = vim.fn.has("win32") == 1
+
 local function normalize(path)
   return (path:gsub("\\", "/"))
+end
+
+-- Compare path prefixes case-insensitively on Windows. The filesystem is
+-- case-insensitive there but `vim.env.USERPROFILE` often reports `C:\Users`
+-- while `ev.file` can come back with `c:\users` depending on how the
+-- buffer was opened — strict string match would silently never classify
+-- the save. Keep the original (normalized) path for the relative-slice
+-- return so downstream chezmoi calls see the real casing.
+local function fold_case(s)
+  if IS_WINDOWS then
+    return s:lower()
+  end
+  return s
 end
 
 local function relative_under(path, root)
   if not path or path == "" or not root or root == "" then
     return nil
   end
-  path = normalize(path)
-  root = normalize(root)
-  if path:sub(1, #root + 1) ~= root .. "/" then
+  local norm_path = normalize(path)
+  local norm_root = normalize(root)
+  local cmp_path = fold_case(norm_path)
+  local cmp_root = fold_case(norm_root)
+  if cmp_path:sub(1, #cmp_root + 1) ~= cmp_root .. "/" then
     return nil
   end
-  return path:sub(#root + 2)
+  return norm_path:sub(#norm_root + 2)
 end
 
 -- True when `rel` (relative to either config_root or its chezmoi source) names

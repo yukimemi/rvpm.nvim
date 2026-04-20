@@ -45,8 +45,20 @@ function M.enabled_in_config()
   return value
 end
 
+local IS_WINDOWS = vim.fn.has("win32") == 1
+
 local function normalize_slashes(p)
   return (p:gsub("\\", "/"))
+end
+
+-- chezmoi CLI on Windows expects native backslash-separated paths. Our
+-- internal comparisons work in forward slashes, but every path we hand
+-- to a `chezmoi` subprocess needs to be converted back.
+local function to_os_path(p)
+  if IS_WINDOWS then
+    return (p:gsub("/", "\\"))
+  end
+  return p
 end
 
 ---Kick off an async `chezmoi source-path <config_root>` to populate the
@@ -66,7 +78,7 @@ function M.prewarm_source_root()
   source_root_in_flight = true
   local cfg = require("rvpm.config")
   vim.system(
-    { "chezmoi", "source-path", cfg.config_root() },
+    { "chezmoi", "source-path", to_os_path(cfg.config_root()) },
     { text = true },
     function(result)
       vim.schedule(function()
@@ -115,7 +127,8 @@ function M.sync_target_to_source(target, callback)
     callback()
     return
   end
-  vim.system({ "chezmoi", "re-add", "--force", target }, { text = true }, function(r1)
+  local target_os = to_os_path(target)
+  vim.system({ "chezmoi", "re-add", "--force", target_os }, { text = true }, function(r1)
     if r1.code == 0 then
       vim.schedule(callback)
       return
@@ -124,7 +137,7 @@ function M.sync_target_to_source(target, callback)
     -- `chezmoi add --force` covers that case. The source_root() gate above means
     -- target is guaranteed to be under a managed ancestor, so add won't pull in
     -- arbitrary unrelated paths.
-    vim.system({ "chezmoi", "add", "--force", target }, { text = true }, function(r2)
+    vim.system({ "chezmoi", "add", "--force", target_os }, { text = true }, function(r2)
       vim.schedule(function()
         if r2.code ~= 0 then
           vim.notify(
@@ -155,7 +168,7 @@ function M.apply_source_to_target(source, callback)
     callback()
     return
   end
-  vim.system({ "chezmoi", "target-path", source }, { text = true }, function(r1)
+  vim.system({ "chezmoi", "target-path", to_os_path(source) }, { text = true }, function(r1)
     local target = nil
     if r1.code == 0 then
       target = vim.trim(r1.stdout or "")
@@ -164,6 +177,8 @@ function M.apply_source_to_target(source, callback)
       vim.schedule(callback)
       return
     end
+    -- target as returned by chezmoi is already OS-native on Windows; pass
+    -- straight through.
     vim.system({ "chezmoi", "apply", "--force", target }, { text = true }, function(r2)
       vim.schedule(function()
         if r2.code ~= 0 then
