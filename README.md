@@ -108,6 +108,9 @@ require("rvpm").setup({
   cmd = "rvpm",          -- path to the rvpm binary
   auto_generate = true,  -- run `rvpm generate` on BufWritePost of config.toml / hooks
   notify = true,         -- vim.notify on CLI completion
+  verbose = false,       -- opt-in: also notify on background successes
+                         --   (autocmd-triggered `rvpm generate`, `chezmoi` ops).
+                         --   Failures notify regardless when notify = true.
   terminal = {
     opener = "float",    -- "float" | "split" | "vsplit" | "tabnew" | any ex-command | function
     -- float-only sizing:

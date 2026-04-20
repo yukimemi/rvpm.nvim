@@ -113,8 +113,11 @@ function M.register()
         return
       end
 
+      -- verbose=true surfaces cli.run's start + success info on autocmd-
+      -- triggered generates; default keeps them silent (failures always
+      -- show regardless of silent when cfg.options.notify is on).
       local function do_generate()
-        cli.run({ "generate" }, { silent = true })
+        cli.run({ "generate" }, { silent = not cfg.options.verbose })
       end
 
       if kind == "target" then

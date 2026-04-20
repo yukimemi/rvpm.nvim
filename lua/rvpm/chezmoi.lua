@@ -10,6 +10,17 @@ local function notify_if_enabled(msg, level)
   end
 end
 
+-- Verbose-only notifier: fires only when the user opted into success / info
+-- messages via `setup({ verbose = true })`. Gated on both `notify` and
+-- `verbose` so disabling either silences these entirely. Used for the
+-- "did it actually apply?" debugging hints on chezmoi successes.
+local function notify_if_verbose(msg, level)
+  local opts = require("rvpm.config").options
+  if opts.notify and opts.verbose then
+    vim.notify(msg, level or vim.log.levels.INFO, { title = "rvpm" })
+  end
+end
+
 local enabled_cache = nil
 -- `false` = resolved to "no source root" (chezmoi off / unmanaged / errored);
 -- `string` = the resolved path; `nil` = not yet resolved.
@@ -140,7 +151,10 @@ function M.sync_target_to_source(target, callback)
   local target_os = to_os_path(target)
   vim.system({ "chezmoi", "re-add", "--force", target_os }, { text = true }, function(r1)
     if r1.code == 0 then
-      vim.schedule(callback)
+      vim.schedule(function()
+        notify_if_verbose("chezmoi re-add: " .. target)
+        callback()
+      end)
       return
     end
     -- re-add failed → typically because the file is new (not yet in source state).
@@ -149,7 +163,9 @@ function M.sync_target_to_source(target, callback)
     -- arbitrary unrelated paths.
     vim.system({ "chezmoi", "add", "--force", target_os }, { text = true }, function(r2)
       vim.schedule(function()
-        if r2.code ~= 0 then
+        if r2.code == 0 then
+          notify_if_verbose("chezmoi add: " .. target)
+        else
           notify_if_enabled(
             "rvpm.nvim: chezmoi sync failed for "
               .. target
@@ -190,7 +206,9 @@ function M.apply_source_to_target(source, callback)
     -- straight through.
     vim.system({ "chezmoi", "apply", "--force", target }, { text = true }, function(r2)
       vim.schedule(function()
-        if r2.code ~= 0 then
+        if r2.code == 0 then
+          notify_if_verbose("chezmoi apply: " .. target)
+        else
           notify_if_enabled(
             "chezmoi apply failed: " .. target .. "\n" .. (r2.stderr or ""),
             vim.log.levels.WARN

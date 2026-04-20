@@ -153,4 +153,46 @@ describe("rvpm.chezmoi", function()
       assert.equals(0, notify_count)
     end)
   end)
+
+  describe("verbose option gating", function()
+    -- Verbose controls whether *success* notifications fire; failures use
+    -- the separate `notify` gate above. These tests exercise the disabled
+    -- path (nothing happens) and the chezmoi-off early-return path
+    -- (callback only, no notify). The enabled-success path needs a real
+    -- chezmoi binary on PATH and is covered by manual smoke.
+
+    local notify_count
+    local saved_notify
+
+    before_each(function()
+      notify_count = 0
+      saved_notify = vim.notify
+      vim.notify = function()
+        notify_count = notify_count + 1
+      end
+    end)
+
+    after_each(function()
+      vim.notify = saved_notify
+    end)
+
+    it("stays silent when verbose=false even if chezmoi would have succeeded", function()
+      write_config("[options]\nchezmoi = false\n")
+      cfg.options.notify = true
+      cfg.options.verbose = false
+      chezmoi.sync_target_to_source("/whatever", function() end)
+      chezmoi.apply_source_to_target("/whatever", function() end)
+      assert.equals(0, notify_count)
+    end)
+
+    it("stays silent when notify=false even if verbose=true", function()
+      -- notify has priority: `notify=false` overrides `verbose=true`.
+      write_config("[options]\nchezmoi = false\n")
+      cfg.options.notify = false
+      cfg.options.verbose = true
+      chezmoi.sync_target_to_source("/whatever", function() end)
+      chezmoi.apply_source_to_target("/whatever", function() end)
+      assert.equals(0, notify_count)
+    end)
+  end)
 end)
