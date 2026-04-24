@@ -59,7 +59,8 @@ local function is_rvpm_file(rel)
 end
 
 ---Classify a saved path:
---- - `"target"` — under `config_root` (needs push to source when chezmoi on)
+--- - `"target"` — under `config_root` (run `rvpm generate` only; no chezmoi
+---    push-back — re-add/add into source is too lossy for templated files)
 --- - `"source"` — under the resolved chezmoi source root (needs apply to target)
 --- - `nil` — unrelated
 ---@param path string Absolute path of the saved file.
@@ -121,7 +122,13 @@ function M.register()
       end
 
       if kind == "target" then
-        chezmoi.sync_target_to_source(path, do_generate)
+        -- Target edits don't get pushed back into chezmoi source: `re-add`
+        -- would overwrite the source verbatim (destroying templates, losing
+        -- attribute prefixes, etc.), and chezmoi's own design treats source
+        -- as the source of truth. Just regenerate — if the user also wants
+        -- the edit preserved across `chezmoi apply`, they should edit the
+        -- source file (or use `:Rvpm edit` / `chezmoi edit`).
+        do_generate()
       else
         chezmoi.apply_source_to_target(path, do_generate)
       end

@@ -24,9 +24,9 @@ M.defaults = {
   notify = true,
   -- Opt-in: when true, also emits `INFO`-level notifications for background
   -- ops that are normally silent-on-success (autocmd-triggered `rvpm generate`,
-  -- `chezmoi re-add` / `add` / `apply`). Failures still notify regardless
-  -- (as long as `notify = true`). Useful for debugging "did it actually run?"
-  -- but noisy on every `:w`, so it's off by default.
+  -- `chezmoi apply`). Failures still notify regardless (as long as
+  -- `notify = true`). Useful for debugging "did it actually run?" but noisy
+  -- on every `:w`, so it's off by default.
   verbose = false,
   terminal = {
     opener = "float",
