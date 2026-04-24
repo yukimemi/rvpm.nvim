@@ -91,17 +91,6 @@ describe("rvpm.chezmoi", function()
     end)
   end)
 
-  describe("sync_target_to_source", function()
-    it("invokes the callback synchronously when chezmoi is disabled", function()
-      write_config("[options]\nchezmoi = false\n")
-      local called = false
-      chezmoi.sync_target_to_source(tmpdir .. "/config.toml", function()
-        called = true
-      end)
-      assert.is_true(called, "callback must fire immediately when disabled")
-    end)
-  end)
-
   describe("apply_source_to_target", function()
     it("invokes the callback synchronously when chezmoi is disabled", function()
       write_config("[options]\nchezmoi = false\n")
@@ -131,16 +120,6 @@ describe("rvpm.chezmoi", function()
 
     after_each(function()
       vim.notify = saved_notify
-    end)
-
-    it("stays silent on sync_target_to_source when notify=false", function()
-      cfg.options.notify = false
-      local fired = false
-      chezmoi.sync_target_to_source("/nonexistent/path", function()
-        fired = true
-      end)
-      assert.is_true(fired)
-      assert.equals(0, notify_count)
     end)
 
     it("stays silent on apply_source_to_target when notify=false", function()
@@ -180,7 +159,6 @@ describe("rvpm.chezmoi", function()
       write_config("[options]\nchezmoi = false\n")
       cfg.options.notify = true
       cfg.options.verbose = false
-      chezmoi.sync_target_to_source("/whatever", function() end)
       chezmoi.apply_source_to_target("/whatever", function() end)
       assert.equals(0, notify_count)
     end)
@@ -190,7 +168,6 @@ describe("rvpm.chezmoi", function()
       write_config("[options]\nchezmoi = false\n")
       cfg.options.notify = false
       cfg.options.verbose = true
-      chezmoi.sync_target_to_source("/whatever", function() end)
       chezmoi.apply_source_to_target("/whatever", function() end)
       assert.equals(0, notify_count)
     end)

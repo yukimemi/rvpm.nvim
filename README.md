@@ -194,10 +194,9 @@ additional wiring is needed. Since `:Rvpm <sub>` dispatches to the same
 binary, those paths are already covered.
 
 `rvpm.nvim` fills the gap pure CLI usage doesn't cover: when you edit
-`config.toml` or a hook file **directly** from Neovim (not via `:Rvpm
-edit`), the save lands on whichever copy you opened. `rvpm.nvim`
-reconciles both directions on `BufWritePost` so chezmoi's source /
-target never drift.
+a source-side hook file **directly** from Neovim (not via `:Rvpm
+edit`), the save needs to be materialized onto the target before
+`rvpm generate` runs. `rvpm.nvim` handles that on `BufWritePost`.
 
 The autocmd resolves `chezmoi source-path <config_root>` **asynchronously
 at setup time** (background subprocess, no UI-thread work; entirely
@@ -206,18 +205,23 @@ classifies each save:
 
 | Saved path is under … | Action |
 |---|---|
-| **target** (`config_root`) | `chezmoi re-add --force <target>`; falls back to `chezmoi add --force <target>` for new files under the managed root. Pushes the edit into source state so the next `chezmoi apply` doesn't revert it. |
-| **source** (resolved from `chezmoi source-path`) | `chezmoi target-path <source>` → `chezmoi apply --force <target>`. Materializes the source change onto the target. Handles attribute renames (`dot_`, `private_`, …) via `target-path`. |
+| **target** (`config_root`) | `rvpm generate` only. No push-back into chezmoi source — see the note below. |
+| **source** (resolved from `chezmoi source-path`) | `chezmoi target-path <source>` → `chezmoi apply --force <target>`, then `rvpm generate`. Handles attribute renames (`dot_`, `private_`, …) via `target-path`. |
 | neither | skip |
 
-Either way, `rvpm generate` runs after.
+Note: direct target edits used to trigger `chezmoi re-add --force` to
+push the edit back into source state, but that's lossy for anything
+templated or renamed (the rendered output clobbers the template, the
+attribute prefix is lost). The safer model is to treat source as the
+source of truth: edit the source file (or use `:Rvpm edit` / `chezmoi
+edit`) when you want the change to survive the next `chezmoi apply`. A
+direct target edit still regenerates `loader.lua`, but chezmoi itself
+will eventually revert the target — that's chezmoi's intended behavior.
 
 Parity & safety:
 
-- **New files are handled**: target-side by the `re-add` → `add` fallback; source-side by `chezmoi apply` creating the target.
-- **Guardrail**: target-side sync only runs when `config_root` itself is chezmoi-managed, so random `BufWritePost`s never get `chezmoi add`-ed.
 - **chezmoi missing / disabled**: the autocmd silently skips the chezmoi step and `rvpm generate` still runs for target edits; source edits become no-ops (there's no "source" to detect).
-- **`.tmpl` caveat**: rvpm discourages chezmoi templates for rvpm files (Tera lives in rvpm itself). Target-side re-add into a `.tmpl` source will be rejected by chezmoi with a warning; source-side apply through a `.tmpl` works but the content should stay plain.
+- **`.tmpl` caveat**: rvpm discourages chezmoi templates for rvpm files (Tera lives in rvpm itself). Source-side apply through a `.tmpl` works but the content should stay plain.
 
 `:checkhealth rvpm` reports whether the integration is active.
 
