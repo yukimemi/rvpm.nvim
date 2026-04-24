@@ -101,7 +101,7 @@ tests/
 
 `SUBCOMMANDS` 配列に全サブコマンド名を持ち、`TUI` テーブルで「floating terminal に流すもの」を判定する:
 
-- **Non-TUI** (`sync` / `generate` / `clean` / `doctor` / `init` / `log`): `cli.run()` で async 実行、notify で完了表示。
+- **Non-TUI** (`sync` / `generate` / `clean` / `doctor` / `init`): `cli.run()` で async 実行、notify で完了表示。
 - **TUI** (`list` / `browse` / `config` / `edit` / `set` / `remove` / `update` / `add`): `terminal.open()` で host window に `rvpm <sub>` を jobstart (`term = true`)。exit 時に host を自動 teardown。
 - **`log` だけ例外**: TUI ではなく `log.lua` の `render()` で専用 tabnew バッファに展開する。
 
@@ -109,7 +109,7 @@ tests/
 1. 1 個目の引数 — `SUBCOMMANDS` のプレフィックスフィルタ。
 2. 2 個目の引数かつ `PLUGIN_ARG_SUBS` (remove / update / edit / set / log) — `cfg.plugin_names()` (config.toml を読んで `[[plugins]]` を抜く) のプレフィックスフィルタ。
 
-`:RvpmAddCursor` は `<cfile>` / `<cword>` から `owner/repo` 形式を正規表現で抜き、`rvpm add` に流す。`.git` サフィックスは stripe。
+`:RvpmAddCursor` は `<cfile>` / `<cword>` から `owner/repo` 形式を正規表現で抜き、`rvpm add` に流す。`.git` サフィックスは strip。
 
 ### floating terminal host (`lua/rvpm/terminal.lua`)
 
