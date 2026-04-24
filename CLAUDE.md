@@ -207,4 +207,4 @@ end
 
 - 設定ファイル解釈 (TOML parse / Tera 展開) / git / merge / loader.lua 生成 / TUI 実装 / chezmoi 書き込み — **全部 rvpm 本体**。
 - Neovim 統合 (user command / autocmd / floating terminal host / :checkhealth / log viewer UI / BufWritePost での generate トリガー) — **rvpm.nvim**。
-- chezmoi の「書き込みパス」は rvpm 本体が async + 2s timeout で制御 (`rvpm` の CLI subcommand 経由だと自動的に chezmoi-safe)。rvpm.nvim が chezmoi を直接呼ぶのは、ユーザーが `:Rvpm edit` を経由せず Neovim から config/hook を直接保存した場合の source → target 反映 (`apply`) のみ。
+- chezmoi の「書き込みパス」は rvpm 本体が async + 2s timeout で制御 (`rvpm` の CLI subcommand 経由だと自動的に chezmoi-safe)。rvpm.nvim が chezmoi の **書き込み** を直接呼ぶのは、ユーザーが `:Rvpm edit` を経由せず Neovim から config/hook を直接保存した場合の source → target 反映 (`chezmoi apply`) のみ。**読み取り系** は別途 `chezmoi source-path` (source root 検出用の prewarm) と `chezmoi target-path` (attribute rename 解決) を呼ぶ — どちらも副作用なし。
