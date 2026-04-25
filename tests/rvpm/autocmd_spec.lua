@@ -92,6 +92,140 @@ describe("rvpm.autocmd._classify", function()
   end
 end)
 
+describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
+  -- Regression for the silent-skip bug observed in production:
+  --   1. user opens `:Rvpm` → `c` (config edit)
+  --   2. $EDITOR is a remote-send command that delivers the source-side
+  --      config.toml to a long-running neovide
+  --   3. user edits and saves the source-side config.toml in neovide
+  --   4. expected: BufWritePost runs `chezmoi apply` then `rvpm generate`
+  --   5. actual (before fix): nothing happens — the user has to
+  --      `chezmoi apply` by hand
+  --
+  -- Root cause: the BufWritePost handler invalidated the chezmoi cache
+  -- *before* classifying the path, so `chezmoi.source_root()` returned
+  -- nil during classification of the very save that triggered the
+  -- invalidation. The path was outside config_root (it's the source
+  -- root), and source detection was off, so classify returned nil.
+  --
+  -- The fix is to classify first and invalidate after.
+  local cli = require("rvpm.cli")
+
+  local saved
+  local source_root_path
+  local cleared
+  local order
+  local apply_target
+  local cli_calls
+
+  local function fake_chezmoi_state()
+    cleared = false
+    order = {}
+    apply_target = nil
+    cli_calls = {}
+
+    chezmoi.source_root = function()
+      table.insert(order, "source_root")
+      if cleared then
+        return nil
+      end
+      return source_root_path
+    end
+    chezmoi.invalidate_cache = function()
+      table.insert(order, "invalidate_cache")
+      cleared = true
+    end
+    chezmoi.prewarm_source_root = function()
+      table.insert(order, "prewarm")
+    end
+    chezmoi.apply_source_to_target = function(src, cb)
+      apply_target = src
+      cb()
+    end
+    cli.run = function(args)
+      table.insert(cli_calls, args[1])
+    end
+  end
+
+  before_each(function()
+    setup_root(ROOT)
+    source_root_path = IS_WINDOWS
+      and "C:/Users/test/.local/share/chezmoi/dot_config/rvpm/nvim"
+      or "/home/test/.local/share/chezmoi/dot_config/rvpm/nvim"
+    saved = {
+      source_root = chezmoi.source_root,
+      invalidate_cache = chezmoi.invalidate_cache,
+      prewarm_source_root = chezmoi.prewarm_source_root,
+      apply_source_to_target = chezmoi.apply_source_to_target,
+      run = cli.run,
+    }
+    fake_chezmoi_state()
+  end)
+
+  after_each(function()
+    chezmoi.source_root = saved.source_root
+    chezmoi.invalidate_cache = saved.invalidate_cache
+    chezmoi.prewarm_source_root = saved.prewarm_source_root
+    chezmoi.apply_source_to_target = saved.apply_source_to_target
+    cli.run = saved.run
+    restore_root()
+  end)
+
+  it("triggers chezmoi apply on source-side config.toml save", function()
+    local source_config = source_root_path .. "/config.toml"
+    autocmd._on_save(source_config)
+
+    assert.equals(
+      source_config,
+      apply_target,
+      "apply_source_to_target must run for source-side config.toml saves "
+        .. "(otherwise the edit never reaches target)"
+    )
+    assert.same({ "generate" }, cli_calls, "generate must run after apply")
+  end)
+
+  it("classifies before invalidating so the source_root cache is still warm", function()
+    autocmd._on_save(source_root_path .. "/config.toml")
+
+    local first_source_root, first_invalidate
+    for i, name in ipairs(order) do
+      if name == "source_root" and not first_source_root then
+        first_source_root = i
+      end
+      if name == "invalidate_cache" and not first_invalidate then
+        first_invalidate = i
+      end
+    end
+    assert.is_not_nil(first_source_root, "classify must consult source_root()")
+    assert.is_not_nil(first_invalidate, "invalidate_cache must run for config.toml save")
+    assert.is_true(
+      first_source_root < first_invalidate,
+      "classify must read source_root BEFORE invalidate_cache (otherwise source detection sees a cleared cache)"
+    )
+  end)
+
+  it("still runs generate-only on target-side config.toml save", function()
+    autocmd._on_save(ROOT .. "/config.toml")
+
+    assert.is_nil(apply_target, "target-side config.toml save must NOT trigger chezmoi apply")
+    assert.same({ "generate" }, cli_calls)
+  end)
+
+  it("still invalidates the chezmoi cache after a target-side config.toml save", function()
+    autocmd._on_save(ROOT .. "/config.toml")
+    assert.is_true(cleared, "invalidate_cache must run so the next save sees the new flag")
+  end)
+
+  it("does nothing for unrelated saves and does not invalidate the cache", function()
+    local unrelated = IS_WINDOWS and "C:/Users/test/project/src/main.rs" or "/home/test/project/src/main.rs"
+    autocmd._on_save(unrelated)
+
+    assert.is_nil(apply_target)
+    assert.same({}, cli_calls)
+    assert.is_false(cleared, "non-config.toml saves must not churn the chezmoi cache")
+  end)
+end)
+
 describe("rvpm.autocmd._is_rvpm_file", function()
   it("accepts root-level config and hooks", function()
     assert.is_true(autocmd._is_rvpm_file("config.toml"))
