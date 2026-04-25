@@ -224,6 +224,21 @@ describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
     assert.same({}, cli_calls)
     assert.is_false(cleared, "non-config.toml saves must not churn the chezmoi cache")
   end)
+
+  it("returns nil and does nothing for nil or empty path", function()
+    -- The autocmd callback always feeds a non-empty string, but tests and
+    -- any future direct callers should be safe — classify() handles nil
+    -- gracefully, but `path:match` below would otherwise blow up.
+    assert.has_no.errors(function()
+      autocmd._on_save(nil)
+    end)
+    assert.has_no.errors(function()
+      autocmd._on_save("")
+    end)
+    assert.is_nil(apply_target)
+    assert.same({}, cli_calls)
+    assert.is_false(cleared, "nil/empty path must not churn the chezmoi cache")
+  end)
 end)
 
 describe("rvpm.autocmd._is_rvpm_file", function()

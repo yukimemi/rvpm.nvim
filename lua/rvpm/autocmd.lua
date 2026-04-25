@@ -89,6 +89,15 @@ end
 -- BufWritePost handler body. Exposed for tests so we can verify the
 -- classify-then-invalidate ordering without juggling autocmd plumbing.
 function M._on_save(path)
+  -- Defensive guard for nil/empty path. classify() already handles nil
+  -- safely, but the `path:match("/config%.toml$")` call below would raise
+  -- "attempt to index a nil value". The autocmd callback always feeds a
+  -- non-empty string, but tests and any future direct callers shouldn't
+  -- have to know about that contract.
+  if not path or path == "" then
+    return nil
+  end
+
   -- Classify FIRST, while the chezmoi cache (source_root) is still valid.
   -- A source-side `config.toml` save is the canonical pitfall: the path
   -- matches `/config%.toml$` AND lives under source_root, so invalidating
