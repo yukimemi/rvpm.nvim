@@ -147,8 +147,8 @@ tests/
 
 `complete()` は 3 段階 (上から優先):
 1. 1 個目の引数 — `SUBCOMMANDS` のプレフィックスフィルタ。
-2. `arg_lead` が `-` で始まる — `FLAGS[sub]` (rvpm の各サブコマンド `--help` をハードコードしたミラー) のプレフィックスフィルタ。位置を問わない (`:Rvpm add foo/bar --on-<Tab>` 等で効く)。**rvpm 本体でフラグが増減したら `FLAGS` も更新すること**。
-3. 2 個目の引数かつ `PLUGIN_ARG_SUBS` (remove / update / edit / set / tune / log) — `cfg.plugin_names()` (config.toml を読んで `[[plugins]]` を抜く) のプレフィックスフィルタ。
+2. `PLUGIN_ARG_SUBS` (remove / update / edit / set / tune / log) の 2 個目の引数かつ `arg_lead` が `-` 始まりではない — `cfg.plugin_names()` (config.toml を読んで `[[plugins]]` を抜く) のプレフィックスフィルタ。
+3. `arg_lead` が `-` 始まり、または空 (= `<Tab>` をベタ打ち) で 2 の plugin-name slot に該当しない — `FLAGS[sub]` (rvpm の各サブコマンド `--help` をハードコードしたミラー) のプレフィックスフィルタ。位置を問わない (`:Rvpm add foo/bar --on-<Tab>` や `:Rvpm sync <Tab>` で効く)。**rvpm 本体でフラグが増減したら `FLAGS` も更新すること**。
 
 `:RvpmAddCursor` は `<cfile>` / `<cword>` から `owner/repo` 形式を正規表現で抜き、`rvpm add` に流す。`.git` サフィックスは strip。
 

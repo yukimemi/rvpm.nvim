@@ -67,12 +67,17 @@ local function complete(arg_lead, cmd_line, _cursor_pos)
 
   local sub = parts[2]
 
-  if arg_lead:sub(1, 1) == "-" then
-    return filter_prefix(FLAGS[sub] or {}, arg_lead)
+  -- Plugin-name slot: second positional for remove/update/edit/set/tune/log.
+  -- Skip if the user is starting a flag (`-`).
+  if PLUGIN_ARG_SUBS[sub] and position == 3 and arg_lead:sub(1, 1) ~= "-" then
+    return filter_prefix(cfg.plugin_names(), arg_lead)
   end
 
-  if PLUGIN_ARG_SUBS[sub] and position == 3 then
-    return filter_prefix(cfg.plugin_names(), arg_lead)
+  -- Flag completion: explicit `-` prefix, or empty arg in any non-plugin slot.
+  -- Empty-arg fallback shows what's available for flag-only subs (sync/profile/...)
+  -- and for the trailing slot of plugin-arg subs (tune <plugin> <Tab>).
+  if arg_lead:sub(1, 1) == "-" or arg_lead == "" then
+    return filter_prefix(FLAGS[sub] or {}, arg_lead)
   end
 
   return {}
