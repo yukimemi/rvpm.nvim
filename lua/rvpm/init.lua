@@ -49,6 +49,20 @@ function M.browse()
 end
 
 ---@param args? string[]
+function M.tune(args)
+  local argv = { "tune" }
+  vim.list_extend(argv, args or {})
+  require("rvpm.terminal").open(argv)
+end
+
+---@param args? string[]
+function M.profile(args)
+  local argv = { "profile" }
+  vim.list_extend(argv, args or {})
+  require("rvpm.terminal").open(argv)
+end
+
+---@param args? string[]
 function M.log(args)
   require("rvpm.log").show(args)
 end

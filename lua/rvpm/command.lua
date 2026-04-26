@@ -6,9 +6,9 @@ local cfg = require("rvpm.config")
 local log = require("rvpm.log")
 
 local SUBCOMMANDS = {
-  "sync", "generate", "clean", "add", "update", "remove",
+  "sync", "generate", "clean", "add", "tune", "update", "remove",
   "edit", "set", "config", "init", "list", "browse",
-  "doctor", "log",
+  "doctor", "profile", "log",
 }
 
 -- Subcommands that drop into an interactive TUI / $EDITOR, routed through
@@ -22,10 +22,32 @@ local TUI = {
   remove = true,
   update = true,
   add = true,
+  tune = true,
+  profile = true,
 }
 
 local PLUGIN_ARG_SUBS = {
-  remove = true, update = true, edit = true, set = true, log = true,
+  remove = true, update = true, edit = true, set = true, tune = true, log = true,
+}
+
+-- Per-subcommand option flags. Hardcoded mirror of `rvpm <sub> --help`.
+-- Keep in sync with the rvpm CLI when flags are added/renamed.
+local FLAGS = {
+  sync    = { "--prune", "--frozen", "--no-lock", "--rebuild", "--refresh", "--no-refresh" },
+  add     = {
+    "--name", "--lazy", "--on-cmd", "--on-ft", "--on-map", "--on-event", "--rev",
+    "--auto-lazy", "--no-lazy", "--ai", "--no-ai",
+  },
+  tune    = { "--ai", "--no-ai" },
+  edit    = { "--init", "--before", "--after", "--global" },
+  set     = {
+    "--lazy", "--merge", "--on-cmd", "--on-ft", "--on-map", "--on-event",
+    "--on-path", "--on-source", "--rev",
+  },
+  list    = { "--no-tui" },
+  init    = { "--write" },
+  profile = { "--runs", "--top", "--json", "--no-tui", "--no-merge", "--no-instrument" },
+  log     = { "--last", "--full", "--diff" },
 }
 
 local function filter_prefix(items, prefix)
@@ -44,8 +66,18 @@ local function complete(arg_lead, cmd_line, _cursor_pos)
   end
 
   local sub = parts[2]
-  if PLUGIN_ARG_SUBS[sub] and position == 3 then
+
+  -- Plugin-name slot: second positional for remove/update/edit/set/tune/log.
+  -- Skip if the user is starting a flag (`-`).
+  if PLUGIN_ARG_SUBS[sub] and position == 3 and arg_lead:sub(1, 1) ~= "-" then
     return filter_prefix(cfg.plugin_names(), arg_lead)
+  end
+
+  -- Flag completion: explicit `-` prefix, or empty arg in any non-plugin slot.
+  -- Empty-arg fallback shows what's available for flag-only subs (sync/profile/...)
+  -- and for the trailing slot of plugin-arg subs (tune <plugin> <Tab>).
+  if arg_lead:sub(1, 1) == "-" or arg_lead == "" then
+    return filter_prefix(FLAGS[sub] or {}, arg_lead)
   end
 
   return {}
