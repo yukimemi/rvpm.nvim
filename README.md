@@ -81,7 +81,7 @@ defaults or opt out of auto-generate.
 | `:Rvpm browse` | TUI plugin browser |
 | `:Rvpm doctor` | Async `rvpm doctor`, output in notification |
 | `:Rvpm log [name] [--last N] [--diff]` | Log in a dedicated buffer |
-| `:Rvpm completion <SHELL>` | Print the shell completion script to messages (run from a shell instead — see `rvpm completion --help`) |
+| `:Rvpm completion <SHELL>` | Open the generated completion script in a scratch buffer (`:w <path>` to save). Running `rvpm completion <SHELL>` from a real shell with output redirection is still the canonical install path |
 | `:RvpmAddCursor` | Pick up `owner/repo` under cursor → `rvpm add` |
 
 Completion covers subcommands, plugin names from `config.toml`, and the

@@ -112,6 +112,14 @@ local function dispatch(opts)
     return
   end
 
+  -- `completion <SHELL>` opens the generated script in a scratch buffer so
+  -- the user can `:w <path>` it. Running it from a real shell is still the
+  -- canonical install path (cf. `rvpm completion --help`).
+  if sub == "completion" then
+    require("rvpm.completion").show(rest[1])
+    return
+  end
+
   local argv = { sub }
   vim.list_extend(argv, rest)
 
