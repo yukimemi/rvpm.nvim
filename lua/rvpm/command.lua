@@ -8,7 +8,7 @@ local log = require("rvpm.log")
 local SUBCOMMANDS = {
   "sync", "generate", "clean", "add", "tune", "update", "remove",
   "edit", "set", "config", "init", "list", "browse",
-  "doctor", "profile", "log",
+  "doctor", "profile", "log", "completion",
 }
 
 -- Subcommands that drop into an interactive TUI / $EDITOR, routed through
@@ -28,6 +28,14 @@ local TUI = {
 
 local PLUGIN_ARG_SUBS = {
   remove = true, update = true, edit = true, set = true, tune = true, log = true,
+}
+
+-- Subcommands whose second positional argument is a closed enum (not a plugin
+-- name). Each entry is the static list of valid values for `:Rvpm <sub> <Tab>`.
+-- Mirrored from the rvpm CLI; keep in sync when new shells / variants are added.
+local POSITIONAL_VALUES = {
+  -- `rvpm completion <SHELL>` — clap_complete's supported shell set.
+  completion = { "bash", "zsh", "fish", "powershell", "elvish" },
 }
 
 -- Per-subcommand option flags. Hardcoded mirror of `rvpm <sub> --help`.
@@ -73,6 +81,11 @@ local function complete(arg_lead, cmd_line, _cursor_pos)
     return filter_prefix(cfg.plugin_names(), arg_lead)
   end
 
+  -- Static-enum slot: e.g. `:Rvpm completion <Tab>` → bash/zsh/fish/...
+  if POSITIONAL_VALUES[sub] and position == 3 and arg_lead:sub(1, 1) ~= "-" then
+    return filter_prefix(POSITIONAL_VALUES[sub], arg_lead)
+  end
+
   -- Flag completion: explicit `-` prefix, or empty arg in any non-plugin slot.
   -- Empty-arg fallback shows what's available for flag-only subs (sync/profile/...)
   -- and for the trailing slot of plugin-arg subs (tune <plugin> <Tab>).
@@ -96,6 +109,26 @@ local function dispatch(opts)
   -- `log` always goes to a dedicated buffer viewer, even without args.
   if sub == "log" then
     log.show(rest)
+    return
+  end
+
+  -- `completion <SHELL>` opens the generated script in a scratch buffer so
+  -- the user can `:w <path>` it. Running it from a real shell is still the
+  -- canonical install path (cf. `rvpm completion --help`).
+  if sub == "completion" then
+    -- 余分な引数は無視せず明示的に弾く。 silent drop だと typo に気付けない
+    -- (CodeRabbit 指摘)。 通知は `cfg.options.notify` 契約に従う。
+    if #rest > 1 then
+      if cfg.options.notify then
+        vim.notify(
+          "Usage: :Rvpm completion <bash|zsh|fish|powershell|elvish>",
+          vim.log.levels.WARN,
+          { title = "rvpm" }
+        )
+      end
+      return
+    end
+    require("rvpm.completion").show(rest[1])
     return
   end
 
