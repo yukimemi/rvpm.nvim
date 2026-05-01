@@ -116,6 +116,18 @@ local function dispatch(opts)
   -- the user can `:w <path>` it. Running it from a real shell is still the
   -- canonical install path (cf. `rvpm completion --help`).
   if sub == "completion" then
+    -- 余分な引数は無視せず明示的に弾く。 silent drop だと typo に気付けない
+    -- (CodeRabbit 指摘)。 通知は `cfg.options.notify` 契約に従う。
+    if #rest > 1 then
+      if cfg.options.notify then
+        vim.notify(
+          "Usage: :Rvpm completion <bash|zsh|fish|powershell|elvish>",
+          vim.log.levels.WARN,
+          { title = "rvpm" }
+        )
+      end
+      return
+    end
     require("rvpm.completion").show(rest[1])
     return
   end

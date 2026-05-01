@@ -1,6 +1,7 @@
 local M = {}
 
 local cli = require("rvpm.cli")
+local cfg = require("rvpm.config")
 
 -- 各 shell に対応する Vim filetype。 `rvpm completion` の出力に色を付けるためだけ。
 -- 不明な shell は `sh` にフォールバック (`elvish` は Vim builtin が無いので素の text)。
@@ -36,22 +37,22 @@ end
 ---@param shell string  bash / zsh / fish / powershell / elvish
 function M.show(shell)
   if not shell or shell == "" then
-    vim.notify(
-      "Usage: :Rvpm completion <bash|zsh|fish|powershell|elvish>",
-      vim.log.levels.WARN,
-      { title = "rvpm" }
-    )
+    -- `cfg.options.notify` 契約に従う: notify=false なら一切通知しない (CodeRabbit 指摘)。
+    if cfg.options.notify then
+      vim.notify(
+        "Usage: :Rvpm completion <bash|zsh|fish|powershell|elvish>",
+        vim.log.levels.WARN,
+        { title = "rvpm" }
+      )
+    end
     return
   end
   cli.run({ "completion", shell }, {
     silent = true,
     on_exit = function(result)
       if result.code ~= 0 then
-        vim.notify(
-          "rvpm completion failed\n" .. (result.stderr or ""),
-          vim.log.levels.ERROR,
-          { title = "rvpm" }
-        )
+        -- 失敗通知は cli.run が `cfg.options.notify` 経由で既に出している。
+        -- ここで vim.notify を呼ぶと二重通知 + notify=false 契約違反になる。
         return
       end
       vim.schedule(function()
