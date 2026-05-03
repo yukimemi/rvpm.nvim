@@ -82,6 +82,7 @@ defaults or opt out of auto-generate.
 | `:Rvpm doctor` | Async `rvpm doctor`, output in notification |
 | `:Rvpm log [name] [--last N] [--diff]` | Log in a dedicated buffer |
 | `:Rvpm completion <SHELL>` | Open the generated completion script in a scratch buffer (`:w <path>` to save). Running `rvpm completion <SHELL>` from a real shell with output redirection is still the canonical install path |
+| `:Rvpm self-update [--yes] [--check]` | Floating-terminal `rvpm self-update` — interactive prompt for the upgrade. `--yes` skips the confirmation; `--check` reports availability without installing |
 | `:RvpmAddCursor` | Pick up `owner/repo` under cursor → `rvpm add` |
 
 Completion covers subcommands, plugin names from `config.toml`, and the
