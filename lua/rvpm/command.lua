@@ -8,11 +8,14 @@ local log = require("rvpm.log")
 local SUBCOMMANDS = {
   "sync", "generate", "clean", "add", "tune", "update", "remove",
   "edit", "set", "config", "init", "list", "browse",
-  "doctor", "profile", "log", "completion",
+  "doctor", "profile", "log", "completion", "self-update",
 }
 
 -- Subcommands that drop into an interactive TUI / $EDITOR, routed through
 -- the floating terminal so Neovim's UI doesn't fight the child process.
+-- `self-update` is included because it prompts (`Update to vX.Y.Z? [y/N]`)
+-- and its installer subprocess (cargo install / self_update) needs a real
+-- TTY for download progress display.
 local TUI = {
   list = true,
   browse = true,
@@ -24,6 +27,7 @@ local TUI = {
   add = true,
   tune = true,
   profile = true,
+  ["self-update"] = true,
 }
 
 local PLUGIN_ARG_SUBS = {
@@ -56,6 +60,7 @@ local FLAGS = {
   init    = { "--write" },
   profile = { "--runs", "--top", "--json", "--no-tui", "--no-merge", "--no-instrument" },
   log     = { "--last", "--full", "--diff" },
+  ["self-update"] = { "--yes", "--check" },
 }
 
 local function filter_prefix(items, prefix)
