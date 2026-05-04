@@ -142,8 +142,8 @@ describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
       apply_target = src
       cb()
     end
-    cli.run = function(args)
-      table.insert(cli_calls, args[1])
+    cli.run = function(args, opts)
+      table.insert(cli_calls, { name = args[1], opts = opts or {} })
     end
   end
 
@@ -181,7 +181,14 @@ describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
       "apply_source_to_target must run for source-side config.toml saves "
         .. "(otherwise the edit never reaches target)"
     )
-    assert.same({ "generate" }, cli_calls, "generate must run after apply")
+    assert.equals(1, #cli_calls, "exactly one cli.run call after apply")
+    assert.equals("generate", cli_calls[1].name, "generate must run after apply")
+    assert.is_true(
+      cli_calls[1].opts.detach == true,
+      "BufWritePost-triggered generate must pass detach=true so a `:wq!` "
+        .. "(or any editor crash mid-run) does not kill rvpm and leave a "
+        .. "half-written loader.lua"
+    )
   end)
 
   it("classifies before invalidating so the source_root cache is still warm", function()
@@ -208,7 +215,13 @@ describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
     autocmd._on_save(ROOT .. "/config.toml")
 
     assert.is_nil(apply_target, "target-side config.toml save must NOT trigger chezmoi apply")
-    assert.same({ "generate" }, cli_calls)
+    assert.equals(1, #cli_calls)
+    assert.equals("generate", cli_calls[1].name)
+    assert.is_true(
+      cli_calls[1].opts.detach == true,
+      "target-side BufWritePost generate must also detach (parent Neovim "
+        .. "may exit immediately on `:wq!`)"
+    )
   end)
 
   it("still invalidates the chezmoi cache after a target-side config.toml save", function()
