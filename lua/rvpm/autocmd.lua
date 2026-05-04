@@ -123,8 +123,19 @@ function M._on_save(path)
   -- verbose=true surfaces cli.run's start + success info on autocmd-
   -- triggered generates; default keeps them silent (failures always
   -- show regardless of silent when cfg.options.notify is on).
+  --
+  -- detach=true makes the spawned rvpm survive parent Neovim death.
+  -- The canonical user flow here is `:wq!` (or `:wq`) — Neovim starts
+  -- shutting down immediately after BufWritePost fires, and a
+  -- non-detached child would be killed mid-generate, leaving a
+  -- half-written `loader.lua` that breaks the next nvim startup. With
+  -- detach, the editor can exit / crash / be killed and `rvpm generate`
+  -- still completes on its own (Linux: `setsid`, Windows: `DETACHED_PROCESS`).
+  -- The trade-off — when Neovim exits before generate finishes, the
+  -- success/failure notify is lost — is acceptable here because this
+  -- path runs under verbose-default-off anyway.
   local function do_generate()
-    cli.run({ "generate" }, { silent = not cfg.options.verbose })
+    cli.run({ "generate" }, { silent = not cfg.options.verbose, detach = true })
   end
 
   if kind == "target" then

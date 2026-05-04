@@ -3,8 +3,16 @@ local M = {}
 local cfg = require("rvpm.config")
 
 ---Run rvpm with args asynchronously.
+---
+---`detach=true` makes the spawned `rvpm` survive the parent Neovim/Neovide
+---process exit (Linux: `setsid`, Windows: `DETACHED_PROCESS`). Used by the
+---BufWritePost auto-generate path so a `:wq!` (or any editor crash mid-run)
+---does not interrupt a long `rvpm generate` and leave a half-written
+---`loader.lua`. The completion callback may not fire when the parent exits
+---first, so callers that rely on `notify=true` user feedback should not pass
+---`detach=true` (interactive `:Rvpm sync` keeps the default).
 ---@param args string[]
----@param opts? { silent?: boolean, on_exit?: fun(result: vim.SystemCompleted) }
+---@param opts? { silent?: boolean, detach?: boolean, on_exit?: fun(result: vim.SystemCompleted) }
 function M.run(args, opts)
   opts = opts or {}
   local cmd = { cfg.options.cmd }
@@ -16,7 +24,8 @@ function M.run(args, opts)
     vim.notify(label .. " …", vim.log.levels.INFO, { title = "rvpm" })
   end
 
-  vim.system(cmd, { text = true }, function(result)
+  local system_opts = { text = true, detach = opts.detach == true }
+  vim.system(cmd, system_opts, function(result)
     vim.schedule(function()
       if notify then
         if result.code == 0 then
