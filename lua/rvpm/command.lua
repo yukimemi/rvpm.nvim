@@ -46,6 +46,7 @@ local POSITIONAL_VALUES = {
 -- Keep in sync with the rvpm CLI when flags are added/renamed.
 local FLAGS = {
   sync    = { "--prune", "--frozen", "--no-lock", "--rebuild", "--refresh", "--no-refresh" },
+  generate = { "--force" },
   add     = {
     "--name", "--lazy", "--on-cmd", "--on-ft", "--on-map", "--on-event", "--rev",
     "--auto-lazy", "--no-lazy", "--ai", "--no-ai",
