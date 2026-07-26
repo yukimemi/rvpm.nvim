@@ -6,9 +6,24 @@ local cfg = require("rvpm.config")
 local log = require("rvpm.log")
 
 local SUBCOMMANDS = {
-  "sync", "generate", "clean", "add", "tune", "update", "remove",
-  "edit", "set", "config", "init", "list", "browse",
-  "doctor", "profile", "log", "completion", "self-update",
+  "sync",
+  "generate",
+  "clean",
+  "add",
+  "tune",
+  "update",
+  "remove",
+  "edit",
+  "set",
+  "config",
+  "init",
+  "list",
+  "browse",
+  "doctor",
+  "profile",
+  "log",
+  "completion",
+  "self-update",
 }
 
 -- Subcommands that drop into an interactive TUI / $EDITOR, routed through
@@ -31,7 +46,12 @@ local TUI = {
 }
 
 local PLUGIN_ARG_SUBS = {
-  remove = true, update = true, edit = true, set = true, tune = true, log = true,
+  remove = true,
+  update = true,
+  edit = true,
+  set = true,
+  tune = true,
+  log = true,
 }
 
 -- Subcommands whose second positional argument is a closed enum (not a plugin
@@ -45,22 +65,38 @@ local POSITIONAL_VALUES = {
 -- Per-subcommand option flags. Hardcoded mirror of `rvpm <sub> --help`.
 -- Keep in sync with the rvpm CLI when flags are added/renamed.
 local FLAGS = {
-  sync    = { "--prune", "--frozen", "--no-lock", "--rebuild", "--refresh", "--no-refresh" },
+  sync = { "--prune", "--frozen", "--no-lock", "--rebuild", "--refresh", "--no-refresh" },
   generate = { "--force" },
-  add     = {
-    "--name", "--lazy", "--on-cmd", "--on-ft", "--on-map", "--on-event", "--rev",
-    "--auto-lazy", "--no-lazy", "--ai", "--no-ai",
+  add = {
+    "--name",
+    "--lazy",
+    "--on-cmd",
+    "--on-ft",
+    "--on-map",
+    "--on-event",
+    "--rev",
+    "--auto-lazy",
+    "--no-lazy",
+    "--ai",
+    "--no-ai",
   },
-  tune    = { "--ai", "--no-ai" },
-  edit    = { "--init", "--before", "--after", "--global" },
-  set     = {
-    "--lazy", "--merge", "--on-cmd", "--on-ft", "--on-map", "--on-event",
-    "--on-path", "--on-source", "--rev",
+  tune = { "--ai", "--no-ai" },
+  edit = { "--init", "--before", "--after", "--global" },
+  set = {
+    "--lazy",
+    "--merge",
+    "--on-cmd",
+    "--on-ft",
+    "--on-map",
+    "--on-event",
+    "--on-path",
+    "--on-source",
+    "--rev",
   },
-  list    = { "--no-tui" },
-  init    = { "--write" },
+  list = { "--no-tui" },
+  init = { "--write" },
   profile = { "--runs", "--top", "--json", "--no-tui", "--no-merge", "--no-instrument" },
-  log     = { "--last", "--full", "--diff" },
+  log = { "--last", "--full", "--diff" },
   ["self-update"] = { "--yes", "--check" },
 }
 

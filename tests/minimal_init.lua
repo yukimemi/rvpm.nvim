@@ -1,10 +1,16 @@
 -- Bootstrap for plenary-busted tests.
 --
--- CI checks out plenary.nvim into `tests/plenary/`; local developers can
+-- CI checks out plenary.nvim into `deps/plenary.nvim/`; local developers can
 -- point at their own plenary install via $PLENARY or by placing plenary
 -- under any of the fallback locations below.
+--
+-- `tests/plenary` is kept as a fallback for checkouts predating the move to
+-- `deps/`: a vendored tree under `tests/` sits inside the directory the
+-- kata-managed workflow walks when discovering `*_spec.lua`, so CI now
+-- clones outside it.
 
 local candidates = {
+  "deps/plenary.nvim",
   "tests/plenary",
   vim.fn.stdpath("data") .. "/lazy/plenary.nvim",
   vim.fn.stdpath("data") .. "/site/pack/vendor/start/plenary.nvim",

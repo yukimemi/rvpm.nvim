@@ -36,16 +36,19 @@ describe("rvpm.cli.run", function()
     cfg.options.notify = saved_notify
   end)
 
-  it("does not pass detach by default (interactive `:Rvpm sync` keeps the child as a process-group child of Neovim)", function()
-    cli.run({ "sync" })
-    assert.is_not_nil(last_call, "vim.system must be called")
-    assert.is_table(last_call.opts)
-    assert.is_falsy(
-      last_call.opts.detach,
-      "default invocation must not detach — interactive `:Rvpm` callers rely on "
-        .. "the completion callback firing to surface success/failure notify"
-    )
-  end)
+  it(
+    "does not pass detach by default (interactive `:Rvpm sync` keeps the child as a process-group child of Neovim)",
+    function()
+      cli.run({ "sync" })
+      assert.is_not_nil(last_call, "vim.system must be called")
+      assert.is_table(last_call.opts)
+      assert.is_falsy(
+        last_call.opts.detach,
+        "default invocation must not detach — interactive `:Rvpm` callers rely on "
+          .. "the completion callback firing to surface success/failure notify"
+      )
+    end
+  )
 
   it("propagates detach=true so the child survives parent Neovim exit", function()
     -- Parent-exit survival is the whole point of the BufWritePost
