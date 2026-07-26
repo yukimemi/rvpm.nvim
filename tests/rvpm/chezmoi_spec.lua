@@ -83,10 +83,7 @@ describe("rvpm.chezmoi", function()
       local start = vim.uv.hrtime()
       chezmoi.prewarm_source_root()
       local elapsed_ms = (vim.uv.hrtime() - start) / 1e6
-      assert.is_true(
-        elapsed_ms < 50,
-        "prewarm should be instant when chezmoi is off, was " .. elapsed_ms .. "ms"
-      )
+      assert.is_true(elapsed_ms < 50, "prewarm should be instant when chezmoi is off, was " .. elapsed_ms .. "ms")
       assert.is_nil(chezmoi.source_root())
     end)
   end)

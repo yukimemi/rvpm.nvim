@@ -39,6 +39,13 @@ jobs:
           # plenary's internal timeout. Running each spec in its own nvim
           # invocation behaves identically on Linux / macOS / Windows.
           set -euo pipefail
+          # A plugin with no suite yet is a valid consumer of this layer;
+          # `find` on a missing path exits non-zero and would fail the job
+          # under `set -e`.
+          if [ ! -d tests ]; then
+            echo "no tests/ directory — skipping"
+            exit 0
+          fi
           status=0
           while IFS= read -r spec; do
             echo "::group::$spec"

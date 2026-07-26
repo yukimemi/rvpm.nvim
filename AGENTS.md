@@ -250,6 +250,20 @@ here so each tool's auto-load behaviour still finds something.
   `chore/release-*`, `kata-apply/auto`, `apm-bump/auto`, and
   Renovate / Dependabot authors) — a missing Claude review on
   those PRs is expected, not a failure.
+- **The PR that first adopts these templates cannot review
+  itself.** `claude-code-action` requires the workflow file to
+  already exist on the default branch with identical content
+  (otherwise a PR could rewrite the workflow to exfiltrate the
+  token), so on the adoption PR it logs "Skipping action due to
+  workflow validation" and exits 0 without reviewing — a green
+  check with no review attached. Expected: merge on CI + owner
+  approval, and the workflow starts working from the next PR on.
+  If the repo has neither `CLAUDE_CODE_OAUTH_TOKEN` nor
+  `ANTHROPIC_API_KEY` set, the credential guard fails the job
+  loudly instead — set one and re-run (subscription path:
+  `claude setup-token` → `gh secret set`; pay-as-you-go: store
+  `ANTHROPIC_API_KEY` and swap the action input to
+  `anthropic_api_key`).
 - **The Claude full review fires once, at PR open** (plus
   `ready_for_review` / `reopened`) — fix pushes do **not** re-trigger
   it (`synchronize` is deliberately off the trigger list; a full

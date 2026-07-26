@@ -39,11 +39,7 @@ function M.show(shell)
   if not shell or shell == "" then
     -- `cfg.options.notify` 契約に従う: notify=false なら一切通知しない (CodeRabbit 指摘)。
     if cfg.options.notify then
-      vim.notify(
-        "Usage: :Rvpm completion <bash|zsh|fish|powershell|elvish>",
-        vim.log.levels.WARN,
-        { title = "rvpm" }
-      )
+      vim.notify("Usage: :Rvpm completion <bash|zsh|fish|powershell|elvish>", vim.log.levels.WARN, { title = "rvpm" })
     end
     return
   end

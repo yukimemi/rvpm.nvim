@@ -120,11 +120,7 @@ function M.open(args)
           -- Skip restore when the opener reused the same bufnr (empty
           -- scratch case): there's no distinct prior buffer, and after
           -- the wipe below nvim will pick a fallback for the window.
-          if
-            have_prior_buf
-            and vim.api.nvim_win_is_valid(win)
-            and vim.api.nvim_buf_is_valid(buf_before)
-          then
+          if have_prior_buf and vim.api.nvim_win_is_valid(win) and vim.api.nvim_buf_is_valid(buf_before) then
             pcall(vim.api.nvim_win_set_buf, win, buf_before)
           end
         else
