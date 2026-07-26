@@ -4,11 +4,11 @@ local cfg = require("rvpm.config")
 
 -- Canonical ex-commands for the built-in opener shortcuts.
 local SHORTCUTS = {
-  split   = "new",
-  hsplit  = "new",
-  vsplit  = "vnew",
-  tabnew  = "tabnew",
-  tab     = "tabnew",
+  split = "new",
+  hsplit = "new",
+  vsplit = "vnew",
+  tabnew = "tabnew",
+  tab = "tabnew",
 }
 
 local function open_float(title)
@@ -120,7 +120,8 @@ function M.open(args)
           -- Skip restore when the opener reused the same bufnr (empty
           -- scratch case): there's no distinct prior buffer, and after
           -- the wipe below nvim will pick a fallback for the window.
-          if have_prior_buf
+          if
+            have_prior_buf
             and vim.api.nvim_win_is_valid(win)
             and vim.api.nvim_buf_is_valid(buf_before)
           then
@@ -136,11 +137,7 @@ function M.open(args)
         end
         vim.cmd("checktime")
         if code ~= 0 and cfg.options.notify then
-          vim.notify(
-            title .. " exited " .. code,
-            vim.log.levels.WARN,
-            { title = "rvpm" }
-          )
+          vim.notify(title .. " exited " .. code, vim.log.levels.WARN, { title = "rvpm" })
         end
       end)
     end,

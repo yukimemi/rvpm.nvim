@@ -4,5 +4,23 @@
 *.luac
 tags
 
-# Pulled in by `make test` / CI for the busted harness.
+# Test frameworks cloned by CI (kata-managed ci.yml clones plenary.nvim
+# here). `tests/plenary/` is the pre-`deps/` location, kept ignored so an
+# existing local checkout doesn't suddenly show up as untracked.
+deps/
 tests/plenary/
+# kata:gitignore:base:begin
+# Editor / OS noise — kata-managed (yukimemi/pj-base).
+.idea/
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
+# APM dependencies — install output of apm.yml's deps.
+# Skill files under .agents/, .claude/, .gemini/ etc. are
+# committed (kata seeds them; renri post_create refreshes via
+# `apm install --update`); the apm_modules/ source cache is not.
+apm_modules/
+# kata:gitignore:base:end

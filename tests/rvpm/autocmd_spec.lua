@@ -62,7 +62,8 @@ describe("rvpm.autocmd._classify", function()
   end)
 
   it("returns nil for paths outside config_root", function()
-    local other = IS_WINDOWS and "C:/Users/test/project/src/main.rs" or "/home/test/project/src/main.rs"
+    local other = IS_WINDOWS and "C:/Users/test/project/src/main.rs"
+      or "/home/test/project/src/main.rs"
     assert.is_nil(autocmd._classify(other))
   end)
 
@@ -149,8 +150,7 @@ describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
 
   before_each(function()
     setup_root(ROOT)
-    source_root_path = IS_WINDOWS
-      and "C:/Users/test/.local/share/chezmoi/dot_config/rvpm/nvim"
+    source_root_path = IS_WINDOWS and "C:/Users/test/.local/share/chezmoi/dot_config/rvpm/nvim"
       or "/home/test/.local/share/chezmoi/dot_config/rvpm/nvim"
     saved = {
       source_root = chezmoi.source_root,
@@ -230,7 +230,8 @@ describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
   end)
 
   it("does nothing for unrelated saves and does not invalidate the cache", function()
-    local unrelated = IS_WINDOWS and "C:/Users/test/project/src/main.rs" or "/home/test/project/src/main.rs"
+    local unrelated = IS_WINDOWS and "C:/Users/test/project/src/main.rs"
+      or "/home/test/project/src/main.rs"
     autocmd._on_save(unrelated)
 
     assert.is_nil(apply_target)
