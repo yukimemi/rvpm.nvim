@@ -62,8 +62,7 @@ describe("rvpm.autocmd._classify", function()
   end)
 
   it("returns nil for paths outside config_root", function()
-    local other = IS_WINDOWS and "C:/Users/test/project/src/main.rs"
-      or "/home/test/project/src/main.rs"
+    local other = IS_WINDOWS and "C:/Users/test/project/src/main.rs" or "/home/test/project/src/main.rs"
     assert.is_nil(autocmd._classify(other))
   end)
 
@@ -219,8 +218,7 @@ describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
     assert.equals("generate", cli_calls[1].name)
     assert.is_true(
       cli_calls[1].opts.detach == true,
-      "target-side BufWritePost generate must also detach (parent Neovim "
-        .. "may exit immediately on `:wq!`)"
+      "target-side BufWritePost generate must also detach (parent Neovim " .. "may exit immediately on `:wq!`)"
     )
   end)
 
@@ -230,8 +228,7 @@ describe("rvpm.autocmd._on_save (chezmoi cache ordering)", function()
   end)
 
   it("does nothing for unrelated saves and does not invalidate the cache", function()
-    local unrelated = IS_WINDOWS and "C:/Users/test/project/src/main.rs"
-      or "/home/test/project/src/main.rs"
+    local unrelated = IS_WINDOWS and "C:/Users/test/project/src/main.rs" or "/home/test/project/src/main.rs"
     autocmd._on_save(unrelated)
 
     assert.is_nil(apply_target)

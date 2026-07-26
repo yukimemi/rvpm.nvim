@@ -98,25 +98,21 @@ function M.prewarm_source_root()
   end
   source_root_in_flight = true
   local cfg = require("rvpm.config")
-  vim.system(
-    { "chezmoi", "source-path", to_os_path(cfg.config_root()) },
-    { text = true },
-    function(result)
-      vim.schedule(function()
-        source_root_in_flight = false
-        if not result or result.code ~= 0 then
-          source_root_cache = false
-          return
-        end
-        local s = vim.trim(result.stdout or "")
-        if s == "" then
-          source_root_cache = false
-          return
-        end
-        source_root_cache = normalize_slashes(s)
-      end)
-    end
-  )
+  vim.system({ "chezmoi", "source-path", to_os_path(cfg.config_root()) }, { text = true }, function(result)
+    vim.schedule(function()
+      source_root_in_flight = false
+      if not result or result.code ~= 0 then
+        source_root_cache = false
+        return
+      end
+      local s = vim.trim(result.stdout or "")
+      if s == "" then
+        source_root_cache = false
+        return
+      end
+      source_root_cache = normalize_slashes(s)
+    end)
+  end)
 end
 
 ---Read the cached chezmoi source root. Non-blocking; returns `nil` when
@@ -159,10 +155,7 @@ function M.apply_source_to_target(source, callback)
         if r2.code == 0 then
           notify_if_verbose("chezmoi apply: " .. target)
         else
-          notify_if_enabled(
-            "chezmoi apply failed: " .. target .. "\n" .. (r2.stderr or ""),
-            vim.log.levels.WARN
-          )
+          notify_if_enabled("chezmoi apply failed: " .. target .. "\n" .. (r2.stderr or ""), vim.log.levels.WARN)
         end
         callback()
       end)

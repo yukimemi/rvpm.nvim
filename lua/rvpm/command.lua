@@ -162,11 +162,7 @@ local function dispatch(opts)
     -- (CodeRabbit 指摘)。 通知は `cfg.options.notify` 契約に従う。
     if #rest > 1 then
       if cfg.options.notify then
-        vim.notify(
-          "Usage: :Rvpm completion <bash|zsh|fish|powershell|elvish>",
-          vim.log.levels.WARN,
-          { title = "rvpm" }
-        )
+        vim.notify("Usage: :Rvpm completion <bash|zsh|fish|powershell|elvish>", vim.log.levels.WARN, { title = "rvpm" })
       end
       return
     end
@@ -189,14 +185,9 @@ local function add_from_cursor()
   if word == "" then
     word = vim.fn.expand("<cword>")
   end
-  local owner_repo = word:match("github%.com[:/]([%w%._%-]+/[%w%._%-]+)")
-    or word:match("^([%w%._%-]+/[%w%._%-]+)$")
+  local owner_repo = word:match("github%.com[:/]([%w%._%-]+/[%w%._%-]+)") or word:match("^([%w%._%-]+/[%w%._%-]+)$")
   if not owner_repo then
-    vim.notify(
-      "No owner/repo under cursor (got: " .. word .. ")",
-      vim.log.levels.WARN,
-      { title = "rvpm" }
-    )
+    vim.notify("No owner/repo under cursor (got: " .. word .. ")", vim.log.levels.WARN, { title = "rvpm" })
     return
   end
   owner_repo = owner_repo:gsub("%.git$", "")

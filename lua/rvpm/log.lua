@@ -35,11 +35,7 @@ function M.show(args)
     silent = true,
     on_exit = function(result)
       if result.code ~= 0 then
-        vim.notify(
-          "rvpm log failed\n" .. (result.stderr or ""),
-          vim.log.levels.ERROR,
-          { title = "rvpm" }
-        )
+        vim.notify("rvpm log failed\n" .. (result.stderr or ""), vim.log.levels.ERROR, { title = "rvpm" })
         return
       end
       render(result.stdout or "")

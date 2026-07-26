@@ -33,9 +33,7 @@ function M.run(args, opts)
             vim.notify(label .. " ✓", vim.log.levels.INFO, { title = "rvpm" })
           end
         else
-          local msg = (result.stderr and result.stderr ~= "" and result.stderr)
-            or result.stdout
-            or ""
+          local msg = (result.stderr and result.stderr ~= "" and result.stderr) or result.stdout or ""
           vim.notify(label .. " ✗\n" .. msg, vim.log.levels.ERROR, { title = "rvpm" })
         end
       end
