@@ -75,12 +75,14 @@ local FLAGS = {
     "--on-map",
     "--on-event",
     "--rev",
+    "--setup",
     "--auto-lazy",
     "--no-lazy",
     "--ai",
     "--no-ai",
   },
   tune = { "--ai", "--no-ai" },
+  update = { "--no-cooldown" },
   edit = { "--init", "--before", "--after", "--global" },
   set = {
     "--lazy",
@@ -205,5 +207,12 @@ function M.register()
     desc = "rvpm add for the owner/repo under the cursor",
   })
 end
+
+-- Test-only handle on the completer. `FLAGS` is a hand-maintained mirror of
+-- the rvpm CLI, so tests pin it directly instead of going through
+-- `getcompletion()` — that route resolves `rvpm.command` through the
+-- runtimepath and would happily assert against an *installed* rvpm.nvim
+-- instead of the working tree.
+M._complete = complete
 
 return M
