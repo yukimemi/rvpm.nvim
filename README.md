@@ -44,15 +44,21 @@ url    = "yukimemi/rvpm.nvim"
 on_cmd = ["Rvpm", "RvpmAddCursor"]
 ```
 
-**With a `setup()` via `opts`** — rvpm >= 3.45.0 calls
-`require("rvpm").setup(<opts>)` for you when `opts` is present (same
-convention as lazy.nvim). Put your options straight in the `[[plugins]]`
-entry:
+**With a `setup()` via `setup`** — rvpm >= 3.48.0 calls
+`require("rvpm").setup(<opts>)` for you when the entry has `setup`. The
+table *is* the options table. Put your options straight in the
+`[[plugins]]` entry:
 
 ```toml
 [[plugins]]
 url    = "yukimemi/rvpm.nvim"
-opts   = { notify = true, auto_generate = true, terminal = { border = "rounded" } }
+setup  = { notify = true, auto_generate = true, terminal = { border = "rounded" } }
+```
+
+Or from the CLI in one line:
+
+```sh
+rvpm add yukimemi/rvpm.nvim --setup '{ notify = true }'
 ```
 
 Or with an explicit hook at
@@ -70,7 +76,7 @@ require("rvpm").setup({
 eagerly via `plugin/rvpm.lua` regardless. Call `setup()` only to tweak
 defaults or opt out of auto-generate.
 
-> Don't call `setup()` from both `opts` and a hook — rvpm warns about the
+> Don't call `setup()` from both `setup` and a hook — rvpm warns about the
 > double setup.
 
 > `auto_generate = true` requires the plugin to be loaded before you
