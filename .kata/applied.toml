@@ -1,9 +1,9 @@
 preset = 'C:\Users\yukimemi\wt\yukimemi\pj-presets\feat-nvim-preset:nvim'
-applied_at = "2026-09-03T04:44:58.169994116Z"
+applied_at = "2026-09-04T03:31:20.831584594Z"
 
 [[templates]]
 source = "github.com/yukimemi/pj-base"
-rev = "6dddfa1a3b889a9ec28382d8ae18f6985c5c9b9e"
+rev = "08989f887002780557cb6e0ce18141d7abf2c85e"
 version = "0.18.0"
 
 [[templates]]
